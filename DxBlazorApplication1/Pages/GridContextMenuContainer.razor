@@ -1,0 +1,125 @@
+﻿@using DxBlazorApplication1.Data
+@using System.Collections
+
+<DxContextMenu @ref="ColumnContextMenu"
+               Data="ColumnContextMenuData"
+               ItemClick="ColumnContextMenu_ItemClick">
+    <DataMappings>
+        <DxContextMenuDataMapping Text="@nameof(ContextMenuItem.Text)"
+                                  Visible="@nameof(ContextMenuItem.Visible)"
+                                  Enabled="@nameof(ContextMenuItem.Enabled)"
+                                  BeginGroup="@nameof(ContextMenuItem.BeginGroup)"
+                                  CssClass="@nameof(ContextMenuItem.CssClass)"
+                                  IconCssClass="@nameof(ContextMenuItem.IconCssClass)" />
+    </DataMappings>
+</DxContextMenu>
+
+<DxContextMenu @ref="RowContextMenu"
+               Data="RowContextMenuData"
+               ItemClick="RowContextMenu_ItemClick">
+    <DataMappings>
+        <DxContextMenuDataMapping Text="@nameof(ContextMenuItem.Text)"
+                                  Visible="@nameof(ContextMenuItem.Visible)"
+                                  Enabled="@nameof(ContextMenuItem.Enabled)"
+                                  BeginGroup="@nameof(ContextMenuItem.BeginGroup)"
+                                  CssClass="@nameof(ContextMenuItem.CssClass)"
+                                  IconCssClass="@nameof(ContextMenuItem.IconCssClass)" />
+    </DataMappings>
+</DxContextMenu>
+
+
+<div @onclick="@(() => PopupVisible = true)">
+    <p>CLICK TO SHOW A POP-UP WINDOW</p>
+</div>
+
+<DxPopup @bind-Visible="@PopupVisible"
+         HeaderText="Header"
+         BodyText="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris sit amet metus vel
+                   nisi blandit tincidunt vel efficitur purus. Nunc nec turpis tempus, accumsan orci auctor,
+                   imperdiet mauris. Fusce id purus magna."
+         AllowDrag="true">
+</DxPopup>
+
+@code {
+    bool PopupVisible { get; set; } = false;
+}
+  
+
+
+
+<DxButton RenderStyle="ButtonRenderStyle.Success"
+          Click="() => WindowVisible = !WindowVisible">Pencereyi Aç</DxButton>
+<DxWindow @bind-Visible="@WindowVisible"
+          HeaderText="Pencere Başlığı"
+          BodyText="Pencere içeriği"
+          ShowFooter="true"
+          FooterText="Alt Bar"
+          Width="max(25vw, 250px)">
+          
+          <HeaderContentTemplate>
+            <DxButton RenderStyle="ButtonRenderStyle.Danger"
+                      Click="() => WindowVisible = !WindowVisible">Pencereyi Kapat</DxButton>
+          </HeaderContentTemplate>
+</DxWindow>
+
+@code {
+    bool WindowVisible { get; set; } = false;
+}
+
+
+
+
+<DxCheckBox Checked="@Checked" CheckedChanged="@((bool value) => OnCheckedChanged(value))">Silent Mode</DxCheckBox>
+<DxCheckBox @bind-Checked="@SubChecked1" Enabled="@Enabled">Enable sound</DxCheckBox>
+<DxCheckBox @bind-Checked="@SubChecked2" Enabled="@Enabled">Enable vibration</DxCheckBox>
+
+@code{
+    bool Enabled { get; set; } = false;
+
+    bool Checked { get; set; } = true;
+    bool SubChecked1 { get; set; } = true;
+    bool SubChecked2 { get; set; } = false;
+
+    void OnCheckedChanged(bool value) {
+        Checked = value;
+        Enabled = !value;
+    }
+}
+
+@code {
+    bool IsOpen { get; set; } = false;
+}
+@code {
+    DxContextMenu ColumnContextMenu { get; set; }
+    DxContextMenu RowContextMenu { get; set; }
+
+    IEnumerable ColumnContextMenuData { get; set; }
+    IEnumerable RowContextMenuData { get; set; }
+
+    IGridColumn ContextMenuColumn { get; set; }
+    int ContextMenuRowIndex { get; set; }
+
+    [Parameter] public IGrid Grid { get; set; }
+
+    void ColumnContextMenu_ItemClick(ContextMenuItemClickEventArgs e)
+        => GridContextMenuHelper.ProcessColumnMenuItemClick((ContextMenuItem)e.ItemInfo.DataItem, ContextMenuColumn, Grid);
+
+    async Task RowContextMenu_ItemClick(ContextMenuItemClickEventArgs e)
+        => await GridContextMenuHelper.ProcessRowMenuItemClickAsync((ContextMenuItem)e.ItemInfo.DataItem, ContextMenuRowIndex, Grid);
+
+    public async Task Grid_ContextMenu(GridCustomizeElementEventArgs e, MouseEventArgs mouseArgs)
+    {
+        if (GridContextMenuHelper.IsColumnContextMenuElement(e.ElementType))
+        {
+            ContextMenuColumn = e.Column;
+            ColumnContextMenuData = GridContextMenuHelper.GetColumnItems(e);
+            await ColumnContextMenu.ShowAsync(mouseArgs);
+        }
+        if (GridContextMenuHelper.IsRowContextMenuElement(e.ElementType))
+        {
+            ContextMenuRowIndex = e.VisibleIndex;
+            RowContextMenuData = GridContextMenuHelper.GetRowItems(e);
+            await RowContextMenu.ShowAsync(mouseArgs);
+        }
+    }
+}
